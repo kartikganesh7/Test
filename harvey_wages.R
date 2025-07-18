@@ -41,14 +41,11 @@ control_counties <- c(
   "05119", "40131", "40139", "40091", "40109", "05173", "05007", "05063", "40099"
 )
 
-# Step 7: Mark treated counties
 qcew[, treated := ifelse(area_fips %in% treated_counties, 1, 0)]
 
-# Step 8: Keep only the 81 treated + control counties
 qcew <- qcew %>%
   filter(area_fips %in% c(treated_counties, control_counties))
 
-# Step 9: Generate event time (Q3 2017 = time 0)
 qcew <- qcew %>%
   mutate(time_to_treat = (year - 2017) * 4 + (qtr - 3),
          year_qtr = paste0(year, "Q", qtr))
@@ -58,35 +55,28 @@ qcew <- qcew[year == 2016 & qtr >= 3 | year == 2017 | year == 2018 | year == 201
 qcew <- qcew %>%
   filter(avg_wkly_wage > 100, avg_wkly_wage < 2000)
 
-# Step 11: Run the event study regression
 event_model_wages <- feols(
   log_wage ~ i(time_to_treat, treated, ref = 0) | area_fips + year_qtr,
   cluster = ~area_fips,
   data = qcew
 )
 
-# Step 12: Print model summary
 summary(event_model_wages)
 
-# Step 13: Plot the event study
 iplot(event_model_wages,
-      main = "Event Study: Hurricane Harvey Impact on Log Wages (2016–2019)",
+      main = "Hurricane Harvey Impact on Log Wages (2016–2019)",
       xlab = "Quarters Since Harvey (Q3 2017 = 0)",
       ylab = "Difference in Log Wages (Treated vs Control)")
 
-# Step 14: Run the event study regression
 event_model_employment <- feols(
   log_empl ~ i(time_to_treat, treated, ref = 0) | area_fips + year_qtr,
   cluster = ~area_fips,
   data = qcew
 )
 
-# Step 12: Print model summary
 summary(event_model_employment)
 
-# Step 13: Plot the event study
 iplot(event_model_employment,
-      main = "Event Study: Hurricane Harvey Impact on Log Employment (2016–2019)",
+      main = "Hurricane Harvey Impact on Log Employment (2016–2019)",
       xlab = "Quarters Since Harvey (Q3 2017 = 0)",
       ylab = "Difference in Log Employment (Treated vs Control)")
-
